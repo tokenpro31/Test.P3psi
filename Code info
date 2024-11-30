@@ -1,0 +1,164 @@
+# Test.P3psi
+''
+int main(int argc, char *argv[])
+{#include <iostream>
+#include <vector>
+#include <string>
+#include <openssl/sha.h>
+
+// Configuration globale
+const int TOTAL_SUPPLY = 10000000;
+(P3psi) 'P$p'
+
+class Coin {
+public:
+    std::string owner;
+    Coin() : owner("Système initial") {}
+};
+
+// Crée les pièces en circulation
+std::vector<Coin> initialize_coins() {
+    std::vector<Coin> coins(TOTAL_SUPPLY);
+    std::cout << TOTAL_SUPPLY << " pièces initialisées avec succès." << std::endl;
+    return coins;
+}
+
+int main() {
+    auto coins = initialize_coins();
+    return 0;
+}
+ #include <iostream>
+#include <sstream>
+#include <string>
+#include <openssl/sha.h>
+
+std::string sha256(const std::string &data) {
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256((unsigned char*)data.c_str(), data.size(), hash);
+
+    std::stringstream ss;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        ss << std::hex << (int)hash[i];
+    }
+    return ss.str();
+}
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <iostream>
+#include <string>
+
+
+    // Crée un objet BIGNUM pour stocker l'exposant
+    BIGNUM* bne = BN_new();
+    if (!BN_set_word(bne, e)) {
+        std::cerr << "Erreur : Impossible de définir l'exposant RSA." << std::endl;
+        RSA_free(rsa);
+        BN_free(bne);
+        return nullptr;
+    }
+
+    // Génère la clé RSA
+    if (RSA_generate_key_ex(rsa, bits, bne, nullptr) != 1) {
+        std::cerr << "Erreur : Génération de clé RSA échouée." << std::endl;
+        RSA_free(rsa);
+        BN_free(bne);
+        return nullptr;
+    }
+
+    // Libère l'objet BIGNUM après l'utilisation
+    BN_free(bne);
+
+    std::cout << "Clé RSA générée avec succès !" << std::endl;
+    return rsa;
+}
+
+// Sauvegarde des clés dans des fichiers PEM
+void save_rsa_keys(RSA* rsa, const std::string& private_key_file, const std::string& public_key_file) {
+    // Sauvegarde de la clé privée
+    FILE* private_file = fopen(private_key_file.c_str(), "wb");
+    if (private_file) {
+        PEM_write_RSAPrivateKey(private_file, rsa, nullptr, nullptr, 0, nullptr, nullptr);
+        fclose(private_file);
+        std::cout << "Clé privée sauvegardée dans : " << private_key_file << std::endl;
+    } else {
+        std::cerr << "Erreur : Impossible de sauvegarder la clé privée." << std::endl;
+    }
+
+    // Sauvegarde de la clé publique
+    FILE* public_file = fopen(public_key_file.c_str(), "wb");
+    if (public_file) {
+        PEM_write_RSA_PUBKEY(public_file, rsa);
+        fclose(public_file);
+        std::cout << "Clé publique sauvegardée dans : " << public_key_file << std::endl;
+    } else {
+        std::cerr << "Erreur : Impossible de sauvegarder la clé publique." << std::endl;
+    }
+}
+
+int main() {
+    // Génère une clé RSA
+    RSA* rsa = generate_rsa_key();
+
+    // Vérifie que la clé a été générée
+    if (rsa) {
+        // Sauvegarde les clés dans des fichiers
+        save_rsa_keys(rsa, "private_key.pem", "public_key.pem");
+
+        // Libère la mémoire allouée pour RSA
+        RSA_free(rsa);
+    }
+
+    return 0;
+}
+
+int main() {
+    RSA* rsa = generate_rsa_key();
+    std::string message = "Transaction cryptée";
+
+    std::string encrypted = rsa_encrypt(rsa, message);
+    std::cout << "Message chiffré : " << encrypted << std::endl;
+
+    std::string decrypted = rsa_decrypt(rsa, encrypted);
+    std::cout << "Message déchiffré : " << decrypted << std::endl;
+
+    RSA_free(rsa);
+    return 0;
+} class Block {
+public:
+    int index;
+    std::string timestamp;
+    std::string data;
+    std::string previousHash;
+    std::string hash;
+    int nonce;
+
+    Block(int idx, const std::string& data, const std::string& prevHash)
+        : index(idx), data(data), previousHash(prevHash), nonce(0) {
+        timestamp = std::to_string(time(0));
+        hash = calculateHash();
+    }
+
+    std::string calculateHash() const {
+        std::string toHash = std::to_string(index) + timestamp + data + previousHash + std::to_string(nonce);
+        return sha256(toHash);
+    }
+
+    void mineBlock(int difficulty) {
+        std::string prefix(difficulty, '0');
+        while (hash.substr(0, difficulty) != prefix) {
+            nonce++;
+            hash = calculateHash();
+        }
+        std::cout << "Bloc miné : " << hash << std::endl;
+    }
+};int main() {
+    Block genesisBlock(0, "Premier bloc - Création de 10M de pièces", "0");
+    genesisBlock.mineBlock(4);
+
+    Block secondBlock(1, "Transfert de 100 pièces", genesisBlock.hash);
+    secondBlock.mineBlock(4);
+
+    return 0;
+}
+	
